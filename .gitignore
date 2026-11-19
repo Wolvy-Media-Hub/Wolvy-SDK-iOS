@@ -1,0 +1,13 @@
+.DS_Store
+.idea/
+*.iml
+build/
+.gradle/
+local.properties
+node_modules/
+.dart_tool/
+.flutter-plugins*
+Pods/
+DerivedData/
+*.keystore
+*.jks
