@@ -1,6 +1,6 @@
 # Wolvy iOS SDK
 
-**0.1.0, in testing (not released yet).** Swift Package Manager. The Flutter and React Native SDKs will use it on iOS.
+**0.1.0**, through Swift Package Manager. The [Flutter](https://github.com/Wolvy-Media-Hub/Wolvy-SDK-Flutter) and [React Native](https://github.com/Wolvy-Media-Hub/Wolvy-SDK-React-Native) SDKs use it on iOS.
 
 Plays Wolvy's DRM-protected video (HLS and FairPlay, through AVPlayer) in your own iPhone or iPad app, with the viewer watermark and the account's look, and with the same methods and events as Wolvy's web Player API and the Android SDK.
 
@@ -10,7 +10,7 @@ Plays Wolvy's DRM-protected video (HLS and FairPlay, through AVPlayer) in your o
 
 ## Install
 
-Once released: Xcode → File → Add Package Dependencies → `https://github.com/Wolvy-Media-Hub/Wolvy-SDK-iOS`, product **WolvyPlayer**. Or in `Package.swift`:
+Xcode → File → Add Package Dependencies → `https://github.com/Wolvy-Media-Hub/Wolvy-SDK-iOS`, product **WolvyPlayer**. Or in `Package.swift`:
 
 ```swift
 .package(url: "https://github.com/Wolvy-Media-Hub/Wolvy-SDK-iOS", from: "0.1.0")
@@ -113,7 +113,7 @@ Xcode 16 or later:
 xcodebuild -scheme WolvyPlayer -destination 'platform=iOS Simulator,name=iPhone 17' test
 ```
 
-`Sample/` is a small SwiftUI app that plays the `embed_url` you paste and logs every event (also to the device log); add `net.wolvy.player.sample` (platform iOS) to a test account's Allowed apps. Its Xcode project is generated from `Sample/project.yml` with [XcodeGen](https://github.com/yonaskolb/XcodeGen). FairPlay plays on real iPhones and iPads only, not in the simulator.
+`Sample/` is a small SwiftUI app that plays the `embed_url` you paste and logs every event (also to the device log); add `net.wolvy.player.sample` (platform iOS) to a test account's Allowed apps. Its Xcode project is generated from `Sample/project.yml` with [XcodeGen](https://github.com/yonaskolb/XcodeGen). FairPlay plays on real iPhones and iPads only, not in the simulator. `spike/` is the phase 4 step 2 test app (FairPlay, the CDN path form and old videos from an app).
 
 Other Wolvy SDKs: [web](https://github.com/Wolvy-Media-Hub/Wolvy-SDK) · [PHP](https://github.com/Wolvy-Media-Hub/Wolvy-SDK-PHP) · [Node.js](https://github.com/Wolvy-Media-Hub/Wolvy-SDK-Node) · [Android](https://github.com/Wolvy-Media-Hub/Wolvy-SDK-Android) · [Flutter](https://github.com/Wolvy-Media-Hub/Wolvy-SDK-Flutter) · [React Native](https://github.com/Wolvy-Media-Hub/Wolvy-SDK-React-Native)
 
