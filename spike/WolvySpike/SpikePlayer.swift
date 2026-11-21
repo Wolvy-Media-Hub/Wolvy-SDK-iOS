@@ -55,6 +55,7 @@ final class SpikePlayer: NSObject, ObservableObject {
     private var itemObservers: [NSObjectProtocol] = []
     private var kvo: [NSKeyValueObservation] = []
     private var appObservers: [NSObjectProtocol] = []
+    private var timeObserver: Any?
     private var startedAt = Date()
 
     override init() {
@@ -127,6 +128,8 @@ final class SpikePlayer: NSObject, ObservableObject {
     }
 
     func stop() {
+        if let timeObserver { player?.removeTimeObserver(timeObserver) }
+        timeObserver = nil
         player?.pause()
         itemObservers.forEach(NotificationCenter.default.removeObserver)
         itemObservers = []
@@ -244,6 +247,13 @@ final class SpikePlayer: NSObject, ObservableObject {
             @unknown default: break
             }
         })
+        // Every 5 s of playback: the position and the picture, so a run can be read with the video black
+        // (a captured screen blanks FairPlay video) and a network drop shows where playback went on from.
+        timeObserver = player.addPeriodicTimeObserver(forInterval: CMTime(seconds: 5, preferredTimescale: 600), queue: .main) { [weak self, weak player] time in
+            guard let player, player.timeControlStatus == .playing else { return }
+            let size = player.currentItem?.presentationSize ?? .zero
+            self?.say(String(format: "at %.1f s, %d×%d, rate %.1f", time.seconds, Int(size.width), Int(size.height), player.rate))
+        }
         let center = NotificationCenter.default
         itemObservers.append(center.addObserver(forName: .AVPlayerItemNewErrorLogEntry, object: item, queue: .main) { [weak self] _ in
             guard let event = item.errorLog()?.events.last else { return }
