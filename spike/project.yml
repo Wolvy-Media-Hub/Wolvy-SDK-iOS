@@ -1,0 +1,30 @@
+# Phase 4 step 2 spike: FairPlay, the CDN path form and old videos from an iOS app.
+# Generate the Xcode project with `xcodegen` in this folder (brew install xcodegen).
+name: WolvySpike
+options:
+  bundleIdPrefix: net.wolvy.spike
+  deploymentTarget:
+    iOS: "15.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "0.0.1"
+    CURRENT_PROJECT_VERSION: "1"
+    # Set your team in Xcode (Signing & Capabilities); a free Apple ID works for a phone test.
+    DEVELOPMENT_TEAM: ""
+    CODE_SIGN_STYLE: Automatic
+targets:
+  WolvySpike:
+    type: application
+    platform: iOS
+    sources: [WolvySpike]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: net.wolvy.spike.ios
+        TARGETED_DEVICE_FAMILY: "1,2"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Wolvy Spike
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
