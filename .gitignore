@@ -11,3 +11,7 @@ Pods/
 DerivedData/
 *.keystore
 *.jks
+xcuserdata/
+*.xcuserstate
+.swiftpm/
+.build/
