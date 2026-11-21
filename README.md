@@ -73,6 +73,12 @@ The player asks for a fresh token before it talks to Wolvy when the one it has e
 | Look | The account's player colour; quality, captions and speed in a menu. `playerView.showControls = false` for a bare view with your own controls |
 | Fullscreen | The button reports `onFullscreenChange(true/false)`; your app changes the layout (the same player can move to another `WolvyPlayerView`, and playback goes on) |
 
+## App protection
+
+Set it up once per app in the dashboard (Settings → Protection → Allowed apps → Protection): enter your Apple team id. There's nothing to code, and no capability to add.
+
+The SDK then proves the app before playback with Apple's App Attest, and Wolvy checks Apple's proof against your team id. A copy signed by anyone else is refused, and only App Store builds are proven unless you allow test builds (TestFlight, Xcode) for your own testing. A proven app plays like Wolvy Player. Without the setup, or when the proof fails, the app plays as before, unless you turn on "Only allow apps that prove they are genuine". `WolvyState.attested` tells you which applies.
+
 ## API
 
 The web Player API's names, so the same code ideas work in every Wolvy SDK. Call on the main thread (the player is `@MainActor`). Methods throw `WolvyError`.

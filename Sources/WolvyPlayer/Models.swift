@@ -8,6 +8,8 @@ public struct WolvyState: Equatable, Sendable {
     public let muted: Bool
     public let volume: Float
     public let playbackRate: Float
+    /// The app proved itself to Wolvy for this video (app protection): it plays like Wolvy Player.
+    public let attested: Bool
 }
 
 /// Qualities on offer, as picture heights. `selected` is the picked height, or nil for automatic

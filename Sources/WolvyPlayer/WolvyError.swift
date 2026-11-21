@@ -7,7 +7,10 @@ import Foundation
 /// dashboard: Settings → Protection → Allowed apps, platform iOS), `viewer_token_required`
 /// (missing, expired or wrongly signed token), `update_required` (this SDK version is too old),
 /// `video_not_found`, `video_not_ready`, `multi_drm_required`, `ip_not_allowed`,
-/// `country_not_allowed`, `viewer_link_locked`, `rate_limited`, `not_available`. Reasons from the
+/// `country_not_allowed`, `viewer_link_locked`, `rate_limited`, `not_available`; with app
+/// protection, `attestation_required` (the account only allows apps that prove themselves, and this
+/// one could not) and the reasons of Wolvy's refusal of the app's proof: `app_not_genuine` (signed
+/// by a team the account does not list, or a test build), `attestation_failed`. Reasons from the
 /// device: `licence_refused`, `playback_failed`, `network`, `token_provider_failed`.
 ///
 /// Messages never contain tokens.

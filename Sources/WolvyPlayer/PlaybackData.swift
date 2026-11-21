@@ -28,6 +28,23 @@ public struct WolvyPlaybackData: Sendable {
     /// App-Only is on for the account (iPhones always have hardware DRM, so it does not block them).
     public let appOnly: Bool
     let apiBase: URL
+    /// The app proved itself to Wolvy (app protection): it is treated like Wolvy Player, and its
+    /// licence requests are signed.
+    public internal(set) var attested: Bool = false
+    /// A proven app's key, for the licence signature. Not readable outside the SDK.
+    var licenceKey: String?
+    var clock: @Sendable () -> Int64 = { Int64(Date().timeIntervalSince1970) }
+
+    /// The headers of one licence request: a proven app signs it, fresh each time (FairPlay may ask
+    /// again later, for a renewal).
+    func licenceHeaders() -> [String: String] {
+        guard let licenceKey else { return [:] }
+        let ts = clock()
+        return [
+            "X-Wolvy-Licence-Timestamp": String(ts),
+            "X-Wolvy-Licence-Signature": AppSigning.licenceSignature(key: licenceKey, licenceToken: licenceToken, timestamp: ts),
+        ]
+    }
 
     /// The FairPlay licence address, with the licence token.
     var licenceUrl: URL {
@@ -102,7 +119,8 @@ public struct WolvyPlaybackData: Sendable {
                 opacity: min(100, max(0, Int(double(wm?["opacity"]) ?? 40)))
             ),
             appOnly: (json["app_only_l3"] as? Bool) ?? ((json["app_only_l3"] as? NSNumber)?.boolValue ?? false),
-            apiBase: apiBase
+            apiBase: apiBase,
+            attested: (json["attested"] as? Bool) ?? ((json["attested"] as? NSNumber)?.boolValue ?? false)
         )
     }
 

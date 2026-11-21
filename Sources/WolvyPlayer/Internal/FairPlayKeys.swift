@@ -2,7 +2,8 @@ import AVFoundation
 
 /// Answers FairPlay key requests for one asset, as the spike proved on an iPhone (SDK plan phase 4
 /// step 2): the application certificate from `process_videos/fairplay.cer`, the SPC posted to
-/// `process_videos/fairplay?token=…` (no Origin: the licence token is an app's, src "sdk"), the CKC
+/// `process_videos/fairplay?token=…` (no Origin: the licence token is an app's, src "sdk", or "app"
+/// for a proven app, whose request also carries the licence signature), the CKC
 /// handed back to the system. The key address in the playlist is `skd://<videoId>`.
 final class FairPlayKeys: NSObject, AVContentKeySessionDelegate {
     /// A licence that could not be had: the HTTP status (0 when the network failed), for the player's error mapping.
@@ -19,12 +20,16 @@ final class FairPlayKeys: NSObject, AVContentKeySessionDelegate {
     private let licenceUrl: URL
     private let certificateUrl: URL
     private let userAgent: String
+    private let licenceHeaders: () -> [String: String]
     private let onFailure: (Failure) -> Void
 
-    init(licenceUrl: URL, certificateUrl: URL, userAgent: String, onFailure: @escaping (Failure) -> Void) {
+    /// - Parameter licenceHeaders: made for each licence request (a proven app's signature, fresh each time).
+    init(licenceUrl: URL, certificateUrl: URL, userAgent: String, licenceHeaders: @escaping () -> [String: String] = { [:] },
+         onFailure: @escaping (Failure) -> Void) {
         self.licenceUrl = licenceUrl
         self.certificateUrl = certificateUrl
         self.userAgent = userAgent
+        self.licenceHeaders = licenceHeaders
         self.onFailure = onFailure
         session = AVContentKeySession(keySystem: .fairPlayStreaming)
         super.init()
@@ -74,6 +79,7 @@ final class FairPlayKeys: NSObject, AVContentKeySessionDelegate {
                 request.httpMethod = "POST"
                 request.setValue("application/octet-stream", forHTTPHeaderField: "Content-Type")
                 request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
+                licenceHeaders().forEach { request.setValue($0.value, forHTTPHeaderField: $0.key) }
                 request.httpBody = spc
                 URLSession.shared.dataTask(with: request) { [self] data, response, error in
                     let status = (response as? HTTPURLResponse)?.statusCode ?? 0
