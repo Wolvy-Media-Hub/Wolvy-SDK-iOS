@@ -75,6 +75,8 @@ final class SpikePlayer: NSObject, ObservableObject {
 
     func say(_ text: String) {
         let line = LogLine(time: Date(), text: Self.redact(text))
+        // Also in the device's system log, where remote device clouds (Sauce Labs) show it.
+        NSLog("[WolvySpike] %@", line.text)
         if Thread.isMainThread {
             log.append(line)
         } else {
