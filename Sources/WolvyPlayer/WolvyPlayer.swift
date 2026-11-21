@@ -16,7 +16,7 @@ import UIKit
 @MainActor
 public final class WolvyPlayer: NSObject {
     /// This SDK's version, sent to Wolvy as `X-Wolvy-SDK: wolvy-ios/<version>`.
-    public nonisolated static let sdkVersion = "0.1.0"
+    public nonisolated static let sdkVersion = "0.2.0"
 
     let avPlayer = AVPlayer()
     private let source: WolvyPlaybackSource
@@ -146,7 +146,8 @@ public final class WolvyPlayer: NSObject {
         tearDownItem()
         licenceFailure = nil
         let asset = AVURLAsset(url: data.playlistUrl(video))
-        let keys = FairPlayKeys(licenceUrl: data.licenceUrl, certificateUrl: data.certificateUrl, userAgent: userAgent) { [weak self] failure in
+        let keys = FairPlayKeys(licenceUrl: data.licenceUrl, certificateUrl: data.certificateUrl, userAgent: userAgent,
+                                licenceHeaders: { data.licenceHeaders() }) { [weak self] failure in
             Task { @MainActor in self?.licenceFailure = failure }
         }
         keys.attach(asset)
@@ -513,7 +514,8 @@ public final class WolvyPlayer: NSObject {
     }
 
     public func getState() -> WolvyState {
-        WolvyState(currentTime: currentTime, duration: duration, paused: paused, muted: muted, volume: userVolume, playbackRate: rate)
+        WolvyState(currentTime: currentTime, duration: duration, paused: paused, muted: muted, volume: userVolume, playbackRate: rate,
+                   attested: data?.attested == true)
     }
 
     public func getQualities() -> WolvyQualities {

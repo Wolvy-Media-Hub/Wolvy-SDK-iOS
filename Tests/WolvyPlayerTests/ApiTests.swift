@@ -300,7 +300,7 @@ final class PlayerTests: XCTestCase {
         XCTAssertThrowsError(try player.seek(10)) { XCTAssertEqual(($0 as? WolvyError)?.code, .notReady) }
         XCTAssertThrowsError(try player.setQuality(720)) { XCTAssertEqual(($0 as? WolvyError)?.code, .notReady) }
         XCTAssertThrowsError(try player.setCaptions("en")) { XCTAssertEqual(($0 as? WolvyError)?.code, .notReady) }
-        XCTAssertEqual(player.getState(), WolvyState(currentTime: 0, duration: 0, paused: true, muted: false, volume: 1, playbackRate: 1.5))
+        XCTAssertEqual(player.getState(), WolvyState(currentTime: 0, duration: 0, paused: true, muted: false, volume: 1, playbackRate: 1.5, attested: false))
         XCTAssertNil(player.videoInfo)
     }
 

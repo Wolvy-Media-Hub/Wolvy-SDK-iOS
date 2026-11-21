@@ -13,6 +13,12 @@ public protocol WolvyPlaybackSource: Sendable {
 
 /// The SDK's own source: `POST {apiBase}/app_render_video` as an iOS app, with the app's bundle id.
 /// The bundle id must be on the account's Allowed apps (Settings → Protection, platform iOS).
+///
+/// With `appProtection` (the default), it also proves the app is genuine when the account has set
+/// up app protection for it (the dashboard's Protection panel: the Apple team id), with Apple's
+/// App Attest. A proven app signs its requests and is treated like Wolvy Player. Without the
+/// setup, or when the proof fails, it plays unproven, as before, unless the account only allows
+/// proven apps.
 public struct WolvyAppRenderVideoSource: WolvyPlaybackSource {
     /// The bundle id sent as X-Wolvy-App-Id.
     public let appId: String
@@ -20,21 +26,42 @@ public struct WolvyAppRenderVideoSource: WolvyPlaybackSource {
     public let sdk: String
     public let apiBase: URL
     let session: URLSession
+    let attestor: AppAttestor?
+    let clock: @Sendable () -> Int64
 
     public init(appId: String = Bundle.main.bundleIdentifier ?? "",
                 sdk: String = "wolvy-ios/\(WolvyPlayer.sdkVersion)",
-                apiBase: URL = WolvyPlaybackData.defaultApiBase) {
-        self.init(appId: appId, sdk: sdk, apiBase: apiBase, session: .shared)
+                apiBase: URL = WolvyPlaybackData.defaultApiBase,
+                appProtection: Bool = true) {
+        let attestor = appProtection
+            ? AppAttestor(appId: appId, sdk: sdk, apiBase: apiBase, service: AppleAppAttest(),
+                          store: KeychainAttestKeyStore(appId: appId), post: wolvyPostForm(session: .shared))
+            : nil
+        self.init(appId: appId, sdk: sdk, apiBase: apiBase, session: .shared, attestor: attestor)
     }
 
-    init(appId: String, sdk: String, apiBase: URL, session: URLSession) {
+    init(appId: String, sdk: String, apiBase: URL, session: URLSession, attestor: AppAttestor? = nil,
+         clock: @escaping @Sendable () -> Int64 = { Int64(Date().timeIntervalSince1970) }) {
         self.appId = appId
         self.sdk = sdk
         self.apiBase = apiBase
         self.session = session
+        self.attestor = attestor
+        self.clock = clock
     }
 
     public func fetch(video: WolvyVideo, sessionId: String?) async throws -> WolvyPlaybackData {
+        do {
+            return try await once(video: video, sessionId: sessionId)
+        } catch let error as WolvyError where attestor != nil && (error.reason == "app_key_expired" || error.reason == "app_key_invalid") {
+            // Wolvy no longer takes the app key: prove the app again, once.
+            await attestor?.invalidate()
+            return try await once(video: video, sessionId: sessionId)
+        }
+    }
+
+    private func once(video: WolvyVideo, sessionId: String?) async throws -> WolvyPlaybackData {
+        let key = await attestor?.keyFor(video.accountId)
         var request = URLRequest(url: apiBase.appendingPathComponent("app_render_video"), timeoutInterval: 20)
         request.httpMethod = "POST"
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
@@ -42,6 +69,13 @@ public struct WolvyAppRenderVideoSource: WolvyPlaybackSource {
         request.setValue("ios", forHTTPHeaderField: "X-Wolvy-Platform")
         request.setValue(appId, forHTTPHeaderField: "X-Wolvy-App-Id")
         request.setValue(sdk, forHTTPHeaderField: "X-Wolvy-SDK")
+        if let key {
+            let ts = clock()
+            request.setValue(key.keyId, forHTTPHeaderField: "X-Wolvy-App-Key-Id")
+            request.setValue(String(ts), forHTTPHeaderField: "X-Wolvy-App-Timestamp")
+            request.setValue(AppSigning.renderSignature(key: key.key, videoId: video.videoId, accountId: video.accountId, timestamp: ts),
+                             forHTTPHeaderField: "X-Wolvy-App-Signature")
+        }
         var fields = [
             "user_id=\(video.accountId)",
             "video_id=\(WolvyPlaybackData.encode(video.videoId))",
@@ -63,11 +97,17 @@ public struct WolvyAppRenderVideoSource: WolvyPlaybackSource {
             throw WolvyError(status >= 500 ? .networkError : .failed, "Wolvy answered HTTP \(status) without JSON.", reason: "http_\(status)")
         }
         guard WolvyPlaybackData.string(json["status"]) == "success" else {
-            throw WolvyError.fromServer(status: status,
-                                        serverCode: WolvyPlaybackData.string(json["code"]).flatMap { $0.isEmpty ? nil : $0 },
-                                        message: WolvyPlaybackData.string(json["message"]))
+            let code = WolvyPlaybackData.string(json["code"]).flatMap { $0.isEmpty ? nil : $0 }
+            // The account only allows proven apps, and Wolvy refused this app's proof: say why.
+            if code == "attestation_required", let refusal = await attestor?.refusal() { throw refusal }
+            throw WolvyError.fromServer(status: status, serverCode: code, message: WolvyPlaybackData.string(json["message"]))
         }
-        return try WolvyPlaybackData.fromJSON(json, apiBase: apiBase)
+        var data = try WolvyPlaybackData.fromJSON(json, apiBase: apiBase)
+        if let key, data.attested {
+            data.licenceKey = key.key
+            data.clock = clock
+        }
+        return data
     }
 }
 

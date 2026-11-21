@@ -47,7 +47,9 @@ final class SampleModel: ObservableObject, WolvyPlayerListener {
     func copyLog() { UIPasteboard.general.string = log.map(\.text).joined(separator: "\n") }
 
     // WolvyPlayerListener
-    func onReady(_ state: WolvyState) { say("ready: \(String(format: "%.1f", state.duration)) s") }
+    func onReady(_ state: WolvyState) {
+        say("ready: \(String(format: "%.1f", state.duration)) s, \(state.attested ? "app proven (app protection)" : "app not proven")")
+    }
     func onPlay(_ currentTime: Double) { say("play at \(String(format: "%.1f", currentTime))") }
     func onPause(_ currentTime: Double) { say("pause at \(String(format: "%.1f", currentTime))") }
     func onEnded() { say("ended") }
